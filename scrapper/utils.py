@@ -53,7 +53,7 @@ def scrape_yahoo_news():
     """
     driver = setup_driver()
     driver.get("https://news.yahoo.com/")
-    time.sleep(3)  # Wait for initial load
+    time.sleep(3)
     
     scroll_down(driver)
     
