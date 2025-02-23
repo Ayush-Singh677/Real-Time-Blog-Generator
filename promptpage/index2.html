@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InsightForge - AI Blog Generator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --background: #ffffff;
+            --text: #1e293b;
+            --card-bg: #ffffff;
+            --shadow: rgba(0, 0, 0, 0.1);
+            --gradient-1: linear-gradient(45deg, #2563eb, #60a5fa);
+            --gradient-2: linear-gradient(45deg, #3b82f6, #93c5fd);
+        }
+
+        [data-theme="dark"] {
+            --primary: #3b82f6;
+            --primary-hover: #60a5fa;
+            --background: #0f172a;
+            --text: #f8fafc;
+            --card-bg: #1e293b;
+            --shadow: rgba(0, 0, 0, 0.3);
+            --gradient-1: linear-gradient(45deg, #3b82f6, #93c5fd);
+            --gradient-2: linear-gradient(45deg, #60a5fa, #bfdbfe);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        @keyframes gradient-animation {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        body {
+            background: var(--background);
+            color: var(--text);
+            font-family: -apple-system, system-ui, sans-serif;
+            line-height: 1.6;
+            transition: background-color 0.3s, color 0.3s;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 10% 20%, rgba(37, 99, 235, 0.1) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(96, 165, 250, 0.1) 0%, transparent 20%),
+                radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 30%);
+            animation: gradient-animation 15s ease infinite;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .navbar {
+            padding: 1rem 2rem;
+            background: var(--card-bg);
+            box-shadow: 0 2px 4px var(--shadow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            transition: opacity 0.3s ease;
+        }
+
+        .logo:hover {
+            opacity: 0.8;
+        }
+
+        .theme-toggle {
+            background: none;
+            border: none;
+            font-size: 1.25rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            transition: transform 0.2s;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        .hero {
+            padding: 4rem 2rem;
+            text-align: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1, h2, h3 {
+            position: relative;
+            display: inline-block;
+        }
+
+        h1::after, h2::after, h3::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: -5px;
+            width: 0;
+            height: 3px;
+            background: var(--gradient-1);
+            transition: width 0.3s ease;
+        }
+
+        h1:hover::after, h2:hover::after, h3:hover::after {
+            width: 100%;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            margin-bottom: 3rem;
+            opacity: 0;
+            transform: translateY(20px);
+            color: #64748b;
+        }
+
+        .prompt-container {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px var(--shadow);
+            margin: 0 auto;
+            max-width: 800px;
+            opacity: 0;
+            transform: translateY(20px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .prompt-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: var(--gradient-1);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .prompt-container:hover::before {
+            transform: scaleX(1);
+        }
+
+        .prompt-input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            background: var(--background);
+            color: var(--text);
+            margin-bottom: 1rem;
+            resize: vertical;
+            transition: all 0.2s;
+            min-height: 120px;
+        }
+
+        .prompt-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            transform: scale(1.005);
+        }
+
+        .generate-btn {
+            background: var(--gradient-1);
+            background-size: 200% auto;
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .generate-btn:hover {
+            background-position: right center;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(37, 99, 235, 0.2);
+        }
+
+        .generate-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            justify-content: center;
+            margin: 2rem 0;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .preview-container {
+            display: none;
+            margin-top: 2rem;
+            padding: 2rem;
+            background: var(--card-bg);
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px var(--shadow);
+            text-align: left;
+        }
+
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--shadow);
+        }
+
+        .preview-content {
+            line-height: 1.8;
+        }
+
+        .view-full-btn {
+            background: var(--gradient-1);
+            background-size: 200% auto;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .view-full-btn:hover {
+            background-position: right center;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(37, 99, 235, 0.2);
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            padding: 4rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px var(--shadow);
+            text-align: center;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--gradient-2);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 0;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .feature-card:hover::before {
+            opacity: 0.1;
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .feature-card h3 {
+            margin-bottom: 1rem;
+            color: var(--primary);
+            position: relative;
+            z-index: 1;
+        }
+
+        .feature-card p {
+            position: relative;
+            z-index: 1;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .hero p {
+                font-size: 1.1rem;
+            }
+
+            .prompt-container {
+                margin: 1rem;
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">InsightForge</div>
+        <button class="theme-toggle">🌙</button>
+    </nav>
+
+    <main>
+        <section class="hero">
+            <h1>Transform Your Ideas into Engaging Blog Posts</h1>
+            <p>Leverage AI to create compelling, well-researched content in seconds</p>
+            
+            <div class="prompt-container">
+                <textarea 
+                    class="prompt-input" 
+                    placeholder="Enter your topic or idea here... (e.g., 'Write a comprehensive guide about sustainable urban farming')"
+                    rows="4"
+                ></textarea>
+                <button class="generate-btn">
+                    <span class="btn-text">Generate Content</span>
+                    <span class="btn-icon">✨</span>
+                </button>
+            </div>
+
+            <div class="loading">
+                <div class="spinner"></div>
+            </div>
+
+            <div class="preview-container">
+                <div class="preview-header">
+                    <h3>Preview</h3>
+                    <button class="view-full-btn">View Full Post</button>
+                </div>
+                <div class="preview-content"></div>
+            </div>
+        </section>
+
+        <section class="features">
+            <div class="feature-card">
+                <div class="feature-icon">🎯</div>
+                <h3>Context-Aware</h3>
+                <p>Our RAG model ensures your content is accurate and relevant by leveraging deep knowledge.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <h3>Lightning Fast</h3>
+                <p>Generate comprehensive blog posts in seconds, not hours.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔍</div>
+                <h3>Research-Backed</h3>
+                <p>Access our curated knowledge base for well-researched content.</p>
+            </div>
+        </section>
+    </main>
+    <script>
+        // Initialize GSAP ScrollTrigger
+        gsap.registerPlugin(ScrollTrigger);
+
+        // Theme toggling with enhanced animation
+        const themeToggle = document.querySelector('.theme-toggle');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+
+        function setTheme(isDark) {
+            // Create a full-screen overlay for transition
+            const overlay = document.createElement('div');
+            overlay.style.position = 'fixed';
+            overlay.style.top = '0';
+            overlay.style.left = '0';
+            overlay.style.width = '100vw';
+            overlay.style.height = '100vh';
+            overlay.style.backgroundColor = isDark ? '#0f172a' : '#ffffff';
+            overlay.style.zIndex = '9999';
+            overlay.style.opacity = '0';
+            overlay.style.pointerEvents = 'none';
+            document.body.appendChild(overlay);
+
+            // Animate the overlay
+            gsap.to(overlay, {
+                opacity: 0.5,
+                duration: 0.3,
+                onComplete: () => {
+                    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+                    themeToggle.textContent = isDark ? '☀️' : '🌙';
+                    gsap.to(overlay, {
+                        opacity: 0,
+                        duration: 0.3,
+                        onComplete: () => overlay.remove()
+                    });
+                }
+            });
+        }
+
+        // Set initial theme
+        setTheme(prefersDark.matches);
+
+        themeToggle.addEventListener('click', () => {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            setTheme(!isDark);
+        });
+
+        // Enhanced Animations
+        const tl = gsap.timeline();
+
+        tl.to('.hero h1', {
+            opacity: 1,
+            y: 0,
+            duration: 1,
+            ease: "power2.out"
+        })
+        .to('.hero p', {
+            opacity: 1,
+            y: 0,
+            duration: 1,
+            ease: "power2.out"
+        }, "-=0.5")
+        .to('.prompt-container', {
+            opacity: 1,
+            y: 0,
+            duration: 1,
+            ease: "power2.out"
+        }, "-=0.5");
+
+        // Parallax effect for feature cards
+        gsap.utils.toArray('.feature-card').forEach((card, i) => {
+            const cardContent = card.querySelector('h3');
+            const cardIcon = card.querySelector('.feature-icon');
+            
+            ScrollTrigger.create({
+                trigger: card,
+                start: 'top 80%',
+                onEnter: () => {
+                    gsap.fromTo(card,
+                        { opacity: 0, y: 50 },
+                        { opacity: 1, y: 0, duration: 0.6, delay: i * 0.2 }
+                    );
+                }
+            });
+
+            // Hover effect
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                const xPercent = (x / rect.width - 0.5) * 20;
+                const yPercent = (y / rect.height - 0.5) * 20;
+
+                gsap.to(card, {
+                    rotationY: xPercent,
+                    rotationX: -yPercent,
+                    duration: 0.5,
+                    ease: "power2.out"
+                });
+
+                gsap.to(cardIcon, {
+                    x: xPercent * 0.5,
+                    y: yPercent * 0.5,
+                    duration: 0.5,
+                    ease: "power2.out"
+                });
+            });
+
+            card.addEventListener('mouseleave', () => {
+                gsap.to(card, {
+                    rotationY: 0,
+                    rotationX: 0,
+                    duration: 0.5,
+                    ease: "power2.out"
+                });
+
+                gsap.to(cardIcon, {
+                    x: 0,
+                    y: 0,
+                    duration: 0.5,
+                    ease: "power2.out"
+                });
+            });
+        });
+
+        // Enhanced text input experience
+        const promptInput = document.querySelector('.prompt-input');
+        const generateBtn = document.querySelector('.generate-btn');
+        const loading = document.querySelector('.loading');
+        const previewContainer = document.querySelector('.preview-container');
+        const previewContent = document.querySelector('.preview-content');
+
+        // Auto-resize textarea
+        promptInput.addEventListener('input', () => {
+            promptInput.style.height = 'auto';
+            promptInput.style.height = promptInput.scrollHeight + 'px';
+        });
+
+        // Typing animation for placeholder
+        const placeholders = [
+            "Write a comprehensive guide about sustainable urban farming...",
+            "Create an engaging post about artificial intelligence trends...",
+            "Draft an article about mindfulness and productivity...",
+            "Compose a blog post about future technology impacts..."
+        ];
+
+        let currentPlaceholderIndex = 0;
+        let currentCharIndex = 0;
+        let isDeleting = false;
+        let typingSpeed = 50;
+
+        function typePlaceholder() {
+            const currentPlaceholder = placeholders[currentPlaceholderIndex];
+            
+            if (isDeleting) {
+                promptInput.setAttribute(
+                    'placeholder',
+                    currentPlaceholder.substring(0, currentCharIndex - 1)
+                );
+                currentCharIndex--;
+                typingSpeed = 30;
+            } else {
+                promptInput.setAttribute(
+                    'placeholder',
+                    currentPlaceholder.substring(0, currentCharIndex + 1)
+                );
+                currentCharIndex++;
+                typingSpeed = 50;
+            }
+
+            if (!isDeleting && currentCharIndex === currentPlaceholder.length) {
+                isDeleting = true;
+                typingSpeed = 2000; // Pause at the end
+            } else if (isDeleting && currentCharIndex === 0) {
+                isDeleting = false;
+                currentPlaceholderIndex = (currentPlaceholderIndex + 1) % placeholders.length;
+                typingSpeed = 500; // Pause before starting new word
+            }
+
+            setTimeout(typePlaceholder, typingSpeed);
+        }
+
+        typePlaceholder();
+
+        // Enhanced generate button interaction
+        generateBtn.addEventListener('click', async () => {
+            const prompt = promptInput.value.trim();
+            
+            if (!prompt) {
+                gsap.to(promptInput, {
+                    x: [-10, 10, -10, 10, 0],
+                    duration: 0.4,
+                    borderColor: 'red'
+                });
+                setTimeout(() => {
+                    promptInput.style.borderColor = '';
+                }, 2000);
+                return;
+            }
+
+            // Show loading state with animation
+            loading.style.display = 'flex';
+            generateBtn.disabled = true;
+            previewContainer.style.display = 'none';
+
+            gsap.to(loading, {
+                opacity: 1,
+                scale: 1,
+                duration: 0.3,
+                ease: "power2.out"
+            });
+
+            try {
+                // Mock API call with enhanced preview animation
+                const data = await mockGenerateContent(prompt);
+                
+                previewContainer.style.display = 'block';
+                previewContent.innerHTML = data.preview;
+                
+                gsap.fromTo(previewContainer,
+                    { opacity: 0, y: 20 },
+                    { 
+                        opacity: 1,
+                        y: 0,
+                        duration: 0.6,
+                        ease: "power2.out"
+                    }
+                );
+
+                // Smooth scroll to preview
+                previewContainer.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'nearest'
+                });
+
+            } catch (error) {
+                console.error('Error:', error);
+                
+                // Enhanced error notification
+                const notification = document.createElement('div');
+                notification.style.position = 'fixed';
+                notification.style.top = '20px';
+                notification.style.right = '20px';
+                notification.style.background = '#ef4444';
+                notification.style.color = 'white';
+                notification.style.padding = '1rem';
+                notification.style.borderRadius = '0.5rem';
+                notification.style.zIndex = '9999';
+                notification.textContent = 'Failed to generate content. Please try again.';
+                
+                document.body.appendChild(notification);
+                
+                gsap.fromTo(notification,
+                    { opacity: 0, x: 100 },
+                    { 
+                        opacity: 1,
+                        x: 0,
+                        duration: 0.3,
+                        ease: "power2.out",
+                        onComplete: () => {
+                            setTimeout(() => {
+                                gsap.to(notification, {
+                                    opacity: 0,
+                                    x: 100,
+                                    duration: 0.3,
+                                    ease: "power2.in",
+                                    onComplete: () => notification.remove()
+                                });
+                            }, 3000);
+                        }
+                    }
+                );
+            } finally {
+                gsap.to(loading, {
+                    opacity: 0,
+                    scale: 0.8,
+                    duration: 0.3,
+                    ease: "power2.in",
+                    onComplete: () => {
+                        loading.style.display = 'none';
+                        generateBtn.disabled = false;
+                    }
+                });
+            }
+        });
+
+        // Mock API function
+        function mockGenerateContent(prompt) {
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    resolve({
+                        preview: `
+                            <h2>${prompt}</h2>
+                            <p>This is a preview of your generated blog post. In a real implementation, this would contain AI-generated content based on your prompt and data from the RAG model.</p>
+                            <p>The content would be well-structured, engaging, and backed by research from your knowledge base.</p>
+                        `
+                    });
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
