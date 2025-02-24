@@ -28,7 +28,7 @@ indian_news_collection = db["indian_news"]
 app = Flask(__name__)
 CORS(app)
 
-TEMP_DIR = "promptpage/temp"
+TEMP_DIR = "main\\temp"
 
 @app.route('/')
 def home():
@@ -82,7 +82,7 @@ def generate_blog():
     title = blog_response.split("{")[2].split("}")[0]
     content = blog_response.split("{")[3].split("}")[0]
 
-    stability_api_key = "sk-2gJI60ofRuwoRctjqcYsKyvPrsMKvO5tOr4hOSK5r0AUQNWy"
+    stability_api_key = "sk-7Y9iay1XD83XUQNfkHbtt8mbGT9x4qtVGuk6re65T9CIB1G9"
     image_url = generate_image(title, stability_api_key)
 
     image_filename = "image.jpeg"
@@ -95,9 +95,9 @@ def generate_blog():
     with open(html_path, 'w', encoding='utf-8') as file:
         file.write(html_content)
 
-    return jsonify({'blog_url': '/promptpage/temp/index.html'})
+    return jsonify({'blog_url': 'main/temp/generated.html'})
 
-@app.route('/promptpage/temp/<filename>')
+@app.route('/main/temp/<filename>')
 def serve_temp_file(filename):
     print(f"Serving file: {filename} from {TEMP_DIR}")
     return send_from_directory(TEMP_DIR, filename)
@@ -120,8 +120,8 @@ def generate_image(prompt, api_key):
         },
     )
     if response.status_code == 200:
-        image_filename = "temp_image.jpeg"
-        image_path = os.path.join(TEMP_DIR, image_filename)
+        image_filename = "image.jpeg"
+        image_path = os.path.join(TEMP_DIR,image_filename)
         with open(image_path, 'wb') as file:
             file.write(response.content)
         return image_path
