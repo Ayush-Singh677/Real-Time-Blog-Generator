@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{title}</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <style>
+        /* All original styles remain exactly the same */
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --background: #ffffff;
+            --text: #1e293b;
+            --card-bg: #ffffff;
+            --shadow: rgba(0, 0, 0, 0.1);
+            --gradient-1: linear-gradient(45deg, #2563eb, #60a5fa);
+            --gradient-2: linear-gradient(45deg, #3b82f6, #93c5fd);
+        }
+
+        [data-theme="dark"] {
+            --primary: #3b82f6;
+            --primary-hover: #60a5fa;
+            --background: #0f172a;
+            --text: #f8fafc;
+            --card-bg: #1e293b;
+            --shadow: rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--background);
+            color: var(--text);
+            font-family: -apple-system, system-ui, sans-serif;
+            line-height: 1.6;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .navbar {
+            padding: 1rem 2rem;
+            background: var(--card-bg);
+            box-shadow: 0 2px 4px var(--shadow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            cursor: pointer;
+            transition: opacity 0.3s ease;
+        }
+
+        .theme-toggle {
+            background: none;
+            border: none;
+            font-size: 1.25rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            transition: transform 0.2s;
+        }
+
+        .blog-post {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: var(--card-bg);
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px var(--shadow);
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .post-header {
+            margin-bottom: 2rem;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .post-title {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .post-meta {
+            display: flex;
+            gap: 1rem;
+            color: #64748b;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .post-image {
+            width: 100%;
+            height: 400px;
+            object-fit: cover;
+            border-radius: 0.5rem;
+            margin-bottom: 2rem;
+            opacity: 0;
+            transform: scale(0.95);
+        }
+
+        .post-content {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .post-content p {
+            margin-bottom: 1.5rem;
+        }
+
+        .engagement-section {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--shadow);
+            opacity: 0;
+        }
+
+        .like-btn {
+            background: var(--card-bg);
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .like-btn:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .comments-section {
+            margin-top: 3rem;
+            opacity: 0;
+        }
+
+        .comment {
+            background: var(--background);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .comment-form {
+            margin-top: 2rem;
+        }
+
+        .comment-form textarea {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid var(--shadow);
+            border-radius: 0.5rem;
+            background: var(--background);
+            color: var(--text);
+            margin-bottom: 1rem;
+            resize: vertical;
+            min-height: 100px;
+            transition: border-color 0.3s ease;
+        }
+
+        .comment-form textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .submit-btn {
+            background: var(--gradient-1);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+
+        .publish-section {
+            margin-top: 2rem;
+            text-align: center;
+            opacity: 0;
+        }
+
+        .publish-btn {
+            background: var(--gradient-1);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 0.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .publish-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+
+        .success-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .success-content {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 1rem;
+            text-align: center;
+            transform: scale(0.8);
+            opacity: 0;
+            position: relative;
+        }
+
+        .success-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            animation: bounce 1s ease infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .view-archive-btn {
+            background: var(--gradient-1);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .view-archive-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+
+        .close-overlay-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            color: var(--text);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            transition: transform 0.2s ease;
+        }
+
+        .close-overlay-btn:hover {
+            transform: scale(1.1);
+        }
+
+        @media (max-width: 768px) {
+            .blog-post {
+                margin: 1rem;
+                padding: 1.5rem;
+            }
+
+            .post-title {
+                font-size: 2rem;
+            }
+
+            .post-image {
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo" onclick="window.location.href='index2.html'">InsightForge</div>
+        <button class="theme-toggle">🌙</button>
+    </nav>
+
+    <article class="blog-post">
+        <header class="post-header">
+            <h1 class="post-title" contenteditable="true">The Future of AI: Trends and Innovations</h1>
+            <div class="post-meta">
+                <span>Published on Feb 24, 2025</span>
+                <span>Category: Technology</span>
+                <span>5 min read</span>
+            </div>
+        </header>
+
+        <img src="/api/placeholder/800/400" alt="Blog post image" class="post-image">
+
+        <div class="post-content" contenteditable="true">
+            <p>Artificial Intelligence has become an integral part of our daily lives, transforming how we work, communicate, and solve problems. From virtual assistants to autonomous vehicles, AI technologies continue to push the boundaries of what's possible.</p>
+            
+            <p>Recent advancements in machine learning algorithms have led to breakthrough applications in healthcare, finance, and environmental protection. These innovations are not just improving efficiency but are also helping address some of humanity's most pressing challenges.</p>
+            
+            <p>Looking ahead, the future of AI promises even more exciting developments. Quantum computing integration, enhanced natural language processing, and more sophisticated neural networks are just a few areas where we can expect significant progress.</p>
+            
+            <p>However, as we embrace these technological advances, it's crucial to consider their ethical implications and ensure that AI development remains focused on benefiting society while protecting individual privacy and security.</p>
+        </div>
+
+        <div class="publish-section">
+            <button class="publish-btn">Publish Blog</button>
+        </div>
+
+        <div class="engagement-section">
+            <button class="like-btn">
+                <span>❤️</span>
+                <span class="like-count">0</span>
+            </button>
+        </div>
+
+        <div class="comments-section">
+            <h3>Comments</h3>
+            <div class="comments-container">
+                <!-- Comments will be dynamically added here -->
+            </div>
+            <form class="comment-form">
+                <textarea placeholder="Share your thoughts..." required></textarea>
+                <button type="submit" class="submit-btn">Post Comment</button>
+            </form>
+        </div>
+    </article>
+
+    <div class="success-overlay">
+        <div class="success-content">
+            <button class="close-overlay-btn">×</button>
+            <div class="success-icon">✔️</div>
+            <h3>Successfully Published!</h3>
+            <p>Your blog has been published to your archive</p>
+            <button class="view-archive-btn">View Archive</button>
+        </div>
+    </div>
+
+    <script>
+        // Initialize GSAP
+        gsap.registerPlugin(ScrollTrigger);
+
+        // Theme toggle functionality
+        const themeToggle = document.querySelector('.theme-toggle');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+
+        function setTheme(isDark) {
+            document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+            themeToggle.textContent = isDark ? '☀️' : '🌙';
+        }
+
+        setTheme(prefersDark.matches);
+
+        themeToggle.addEventListener('click', () => {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            setTheme(!isDark);
+        });
+
+        // Animations
+        window.addEventListener('load', () => {
+            // Initial animations
+            gsap.to('.blog-post', {
+                opacity: 1,
+                y: 0,
+                duration: 0.8,
+                ease: "power2.out"
+            });
+
+            gsap.to('.post-header', {
+                opacity: 1,
+                y: 0,
+                duration: 0.8,
+                delay: 0.2,
+                ease: "power2.out"
+            });
+
+            gsap.to('.post-image', {
+                opacity: 1,
+                scale: 1,
+                duration: 0.8,
+                delay: 0.4,
+                ease: "power2.out"
+            });
+
+            gsap.to('.post-content', {
+                opacity: 1,
+                y: 0,
+                duration: 0.8,
+                delay: 0.6,
+                ease: "power2.out"
+            });
+
+            gsap.to('.publish-section', {
+                opacity: 1,
+                duration: 0.8,
+                delay: 0.8,
+                ease: "power2.out"
+            });
+
+            gsap.to('.engagement-section', {
+                opacity: 1,
+                duration: 0.8,
+                delay: 1.0,
+                ease: "power2.out"
+            });
+
+            gsap.to('.comments-section', {
+                opacity: 1,
+                duration: 0.8,
+                delay: 1.2,
+                ease: "power2.out"
+            });
+        });
+
+        // Like button functionality
+        const likeBtn = document.querySelector('.like-btn');
+        let isLiked = false;
+        let likeCount = 0;
+
+        likeBtn.addEventListener('click', () => {
+            isLiked = !isLiked;
+            likeCount = isLiked ? likeCount + 1 : likeCount - 1;
+            document.querySelector('.like-count').textContent = likeCount;
+            
+            gsap.to(likeBtn, {
+                scale: 1.2,
+                duration: 0.1,
+                yoyo: true,
+                repeat: 1
+            });
+
+            if (isLiked) {
+                likeBtn.style.background = 'var(--primary)';
+                likeBtn.style.color = 'white';
+            } else {
+                likeBtn.style.background = 'var(--card-bg)';
+                likeBtn.style.color = 'var(--primary)';
+            }
+        });
+
+        // Comment form functionality
+        const commentForm = document.querySelector('.comment-form');
+        const commentsContainer = document.querySelector('.comments-container');
+
+        commentForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const textarea = commentForm.querySelector('textarea');
+            const commentText = textarea.value.trim();
+
+            if (commentText) {
+                const comment = document.createElement('div');
+                comment.classList.add('comment');
+                comment.innerHTML = `
+                    <strong>User</strong>
+                    <p>${commentText}</p>`;
+
+                comment.style.opacity = 0;
+                comment.style.transform = 'translateY(20px)';
+                commentsContainer.insertBefore(comment, commentsContainer.firstChild);
+
+                gsap.to(comment, {
+                    opacity: 1,
+                    y: 0,
+                    duration: 0.5,
+                    ease: "power2.out"
+                });
+
+                textarea.value = '';
+            }
+        });
+
+        // Publish button functionality
+        const publishBtn = document.querySelector('.publish-btn');
+        const successOverlay = document.querySelector('.success-overlay');
+        const viewArchiveBtn = document.querySelector('.view-archive-btn');
+        const closeOverlayBtn = document.querySelector('.close-overlay-btn');
+
+        publishBtn.addEventListener('click', () => {
+            successOverlay.style.display = 'flex';
+            
+            gsap.to('.success-content', {
+                scale: 1,
+                opacity: 1,
+                duration: 0.5,
+                ease: "back.out(1.7)"
+            });
+        });
+
+        // Add close button functionality
+        closeOverlayBtn.addEventListener('click', () => {
+            gsap.to('.success-content', {
+                scale: 0.8,
+                opacity: 0,
+                duration: 0.3,
+                ease: "power2.in",
+                onComplete: () => {
+                    successOverlay.style.display = 'none';
+                }
+            });
+        });
+
+        viewArchiveBtn.addEventListener('click', () => {
+             window.open('archive_page.html', '_blank');  // '_blank' opens in new tab
+        });
+    </script>
+</body>
+</html>
