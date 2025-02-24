@@ -23,7 +23,6 @@ def setup_driver():
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=chrome_options)
     
-    # Hide automation detection
     driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
         "source": """
         Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
@@ -39,12 +38,72 @@ def scroll_down(driver):
     last_height = driver.execute_script("return document.body.scrollHeight")
     while True:
         driver.find_element(By.TAG_NAME, 'body').send_keys(Keys.END)
-        time.sleep(2)  # Wait for new content to load
+        time.sleep(2)
         new_height = driver.execute_script("return document.body.scrollHeight")
         if new_height == last_height:
             break
         last_height = new_height
 
+
+def scrape_nytimes_world_news():
+    """
+    Scrape news articles from The New York Times World section.
+    Extracts headlines and summaries from pages 2 to 20.
+    Returns a DataFrame and writes the results to 'nytimes_world_news.csv'.
+    """
+    driver = setup_driver()
+    base_url = "https://www.nytimes.com/international/section/world?page="
+    
+    all_titles = []
+    all_summaries = []
+    
+    for page_number in range(2, 21):  
+        url = f"{base_url}{page_number}"
+        print(f"Processing {url} ...")
+        driver.get(url)
+        time.sleep(3)  
+        
+        scroll_down(driver)
+        
+
+        articles = driver.find_elements(By.CSS_SELECTOR, "li.css-18yolpw article.css-1l4spti")
+        print(f"Found {len(articles)} articles on page {page_number}")
+        
+        for article in articles:
+            try:
+        
+                title_element = article.find_element(By.CSS_SELECTOR, "a.css-8hzhxf h3.css-1j88qqx.e15t083i0")
+                title = title_element.text.strip() if title_element else ""
+                
+                if not title or title.isspace():
+                    print("Skipping article with empty title.")
+                    continue
+                
+               
+                summary_element = article.find_element(By.CSS_SELECTOR, "p.css-1pga48a.e15t083i1")
+                summary = summary_element.text.strip() if summary_element else "No summary available"
+                
+ 
+                all_titles.append(title)
+                all_summaries.append(summary)
+                
+                print(f"Scraped article: {title}")
+            except Exception as e:
+                print(f"Error processing an article: {e}")
+                continue
+    
+    driver.quit()
+
+    df = pd.DataFrame({
+        "Category": ["World"] * len(all_titles), 
+        "Headline": all_titles,
+        "Summary": all_summaries
+    })
+    
+
+    df.to_csv("nytimes_world_news.csv", index=False)
+    print(f"Dataset saved as nytimes_world_news.csv with {len(all_titles)} articles.")
+    return df
 
 def scrape_bbc_news():
     """
@@ -88,17 +147,18 @@ def scrape_bbc_news():
     })
     return df
 
+
 def scrape_indian_express():
     """
     Scrape news articles from the Indian Express section pages for each specified category.
     Extracts the title, summary, and date for each article.
-    Returns a DataFrame and writes the results to 'indianexpress_news.csv'.
+    Returns a DataFrame and appends the results to 'indianexpress_news.csv'.
     """
     driver = setup_driver()
     
     base_url = "https://indianexpress.com/section/"
-    # List of categories to iterate over (appended to the base URL)
-    categories_list = ["political-pulse", "cities", "sports",  "lifestyle"]
+
+    categories_list = ["political-pulse", "cities", "sports", "lifestyle"]
     
     all_categories = []
     all_titles = []
@@ -106,36 +166,35 @@ def scrape_indian_express():
     all_dates = []
     
     for cat in categories_list:
-        url = base_url + cat
-        print(f"Processing {url} ...")
-        driver.get(url)
-        time.sleep(3)  # Wait for page load
-        
-        scroll_down(driver)
-        
-        # Locate all articles on the page
-        articles = driver.find_elements(By.CSS_SELECTOR, "div.articles")
-        print(f"Found {len(articles)} articles in {cat}")
-        
-        for article in articles:
-            try:
-                title_element = article.find_element(By.CSS_SELECTOR, "div.img-context h2.title a")
-                title = title_element.text.strip()
-                
-                summary_element = article.find_element(By.CSS_SELECTOR, "div.img-context p")
-                summary = summary_element.text.strip()
-                
-                date_element = article.find_element(By.CSS_SELECTOR, "div.img-context div.date")
-                date = date_element.text.strip()
-                
-                all_categories.append(cat)
-                all_titles.append(title)
-                all_summaries.append(summary)
-                all_dates.append(date)
-            except Exception as e:
-                # Skip articles if any element is missing
-                continue
-
+        for page in range(1, 21):  
+            url = f"{base_url}{cat}/page/{page}/" if page > 1 else f"{base_url}{cat}"
+            print(f"Processing {url} ...")
+            driver.get(url)
+            time.sleep(3) 
+            
+            scroll_down(driver)
+            
+            articles = driver.find_elements(By.CSS_SELECTOR, "div.articles")
+            print(f"Found {len(articles)} articles in {cat} on page {page}")
+            
+            for article in articles:
+                try:
+                    title_element = article.find_element(By.CSS_SELECTOR, "div.img-context h2.title a")
+                    title = title_element.text.strip()
+                    
+                    summary_element = article.find_element(By.CSS_SELECTOR, "div.img-context p")
+                    summary = summary_element.text.strip()
+                    
+                    date_element = article.find_element(By.CSS_SELECTOR, "div.img-context div.date")
+                    date = date_element.text.strip()
+                    
+                    all_categories.append(cat)
+                    all_titles.append(title)
+                    all_summaries.append(summary)
+                    all_dates.append(date)
+                except Exception as e:
+                    continue
+    
     driver.quit()
     
     df = pd.DataFrame({
@@ -145,77 +204,14 @@ def scrape_indian_express():
         "Date": all_dates
     })
     
-    df.to_csv("indianexpress_news.csv", index=False)
+    try:
+        existing_df = pd.read_csv("indianexpress_news.csv")
+        combined_df = pd.concat([existing_df, df], ignore_index=True)
+        combined_df.to_csv("indianexpress_news.csv", index=False)
+    except FileNotFoundError:
+        df.to_csv("indianexpress_news.csv", index=False)
+    
     return df
-
-def scrape_reuters_news():
-    """
-    Scrape news articles from bbc News.
-    Returns a DataFrame containing the scraped data.
-    """
-    driver = setup_driver()
-    driver.get("https://reuters.com/")
-    time.sleep(3)
-    
-    scroll_down(driver)
-    
-    # Extract the cluster category from the header (used as a fallback)
-    cluster_category = driver.find_element(
-        By.CSS_SELECTOR,
-        'section[data-testid="story-cluster"] h2[data-testid="story-clusterSectionNameHeading"] a'
-    ).text.strip()
-
-    # Find all story cards within the cluster
-    articles = driver.find_elements(By.CSS_SELECTOR, 'li[data-testid="StoryCard"]')
-
-    # Lists to store the extracted details
-    categories = []
-    titles = []
-    links = []
-    summaries = []
-    dates = []
-
-    for article in articles:
-        try:
-            # Extract the title and link from the story card
-            title_link_element = article.find_element(By.CSS_SELECTOR, 'a[data-testid="TitleLink"]')
-            title = title_link_element.find_element(
-                By.CSS_SELECTOR, 'span[data-testid="TitleHeading"]'
-            ).text.strip()
-            link = title_link_element.get_attribute("href")
-            
-            # Extract the summary/description
-            summary_element = article.find_element(By.CSS_SELECTOR, 'p[data-testid="Description"]')
-            summary = summary_element.text.strip() if summary_element else "No summary available"
-            
-            # Extract the datetime (from the <time> element)
-            time_element = article.find_element(By.CSS_SELECTOR, 'time[data-testid="DateLineText"]')
-            date = time_element.get_attribute("datetime")
-            
-            # Attempt to extract a specific category (kicker) if present; else, use the cluster category
-            try:
-                category = article.find_element(By.CSS_SELECTOR, 'span[data-testid="KickerLabel"]').text.strip()
-            except Exception:
-                category = cluster_category
-            
-            # Append the extracted information to the lists
-            categories.append(category)
-            titles.append(title)
-            summaries.append(summary)
-            dates.append(date)
-        except Exception as e:
-            continue
-        
-        driver.quit()
-        
-        df = pd.DataFrame({
-            "Category": categories,
-            "Headline": titles,
-            "Summary": summaries,
-            "Dates": date
-        })
-        return df
-        
 
 
 def scrape_yahoo_news():
