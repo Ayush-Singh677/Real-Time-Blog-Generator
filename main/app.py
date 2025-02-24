@@ -47,7 +47,7 @@ def generate_blog():
                     "queryVector": query_embedding,
                     "path": "embedding",
                     "exact": True,
-                    "limit": 5
+                    "limit": 15
                 }
             },
             {
