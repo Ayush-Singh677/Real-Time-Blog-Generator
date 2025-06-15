@@ -1,4 +1,4 @@
-# Intell-News: Autonomous News Aggregator & Summarizer 
+# Real Time Blog Generator
 
 ## **🎯 Overview**
 This project is an **autonomous AI agent** designed to search, summarize, and publish content on general news topics such as current events, crime, sports, politics, and more. The system operates at both **global** and **local levels**, extracting data from reliable sources, generating concise summaries, optimizing content for SEO, and publishing articles autonomously on a blog or website.
